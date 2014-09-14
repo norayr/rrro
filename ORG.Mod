@@ -1,8 +1,12 @@
 MODULE ORG; (* NW  24.6.2014  code generator in Oberon-07 for RISC*)
-  IMPORT SYSTEM, Files, ORS, ORB;
+  IMPORT SYSTEM, Files := CompatFiles, ORS, ORB;
   (*Code generator for Oberon compiler for RISC processor.
      Procedural interface to Parser OSAP; result in array "code".
      Procedure Close writes code-files*)
+
+  (* voc adaptation by noch *)
+  TYPE INTEGER = LONGINT;
+       BYTE = CHAR;
 
   CONST WordSize* = 4;
     StkOrg0 = -64; VarOrg0 = 0;  (*for RISC-0 only*)
@@ -49,6 +53,15 @@ MODULE ORG; (* NW  24.6.2014  code generator in Oberon-07 for RISC*)
     code: ARRAY maxCode OF LONGINT;
     data: ARRAY maxTD OF LONGINT;  (*type descriptors*)
     str: ARRAY maxStrx OF CHAR;
+
+   (* voc adaptation by noch *)
+   PROCEDURE LSL (x, n : INTEGER): INTEGER;
+
+   BEGIN
+   
+     RETURN ASH(x, n);
+   END LSL;
+
 
   (*instruction assemblers according to formats*)
 
@@ -503,7 +516,8 @@ MODULE ORG; (* NW  24.6.2014  code generator in Oberon-07 for RISC*)
 
   PROCEDURE Singleton*(VAR x: Item);  (* x := {x} *)
   BEGIN
-    IF x.mode = ORB.Const THEN x.a := LSL(1, x.a)
+    IF x.mode = ORB.Const THEN 
+       x.a := LSL(1, x.a)
     ELSE load(x); Put1(Mov, RH, 0, 1); Put0(Lsl, x.r, RH,  x.r)
     END
   END Singleton;
@@ -1063,7 +1077,9 @@ MODULE ORG; (* NW  24.6.2014  code generator in Oberon-07 for RISC*)
     size := varsize + strx + comsize + (pc + nofimps + nofent + nofptrs + 1)*4;  (*varsize includes type descriptors*)
 
     ORB.MakeFileName(name, modid, ".rsc"); (*write code file*)
-    F := Files.New(name); Files.Set(R, F, 0); Files.WriteString(R, modid); Files.WriteInt(R, key); Files.WriteByte(R, version);
+    F := Files.New(name); Files.Set(R, F, 0); Files.WriteString(R, modid); Files.WriteInt(R, key); 
+    (*Files.WriteByte(R, version);*) (* who writes like that? -- noch  *)
+    Files.WriteByte(R, SHORT(SHORT(version))); (* voc adaptation by noch *)
     Files.WriteInt(R, size);
     obj := ORB.topScope.next;
     WHILE (obj # NIL) & (obj.class = ORB.Mod) DO  (*imports*)

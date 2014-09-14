@@ -1,5 +1,7 @@
 MODULE ORS; (* NW 19.9.93 / 1.4.2014  Scanner in Oberon-07*)
-  IMPORT SYSTEM, Texts, Oberon;
+  IMPORT SYSTEM, Texts := CompatTexts, Oberon;
+
+  TYPE INTEGER = LONGINT; (* voc adaptation by noch *)
 
 (* Oberon Scanner does lexical analysis. Input is Oberon-Text, output is
   sequence of symbols, i.e identifiers, numbers, strings, and special symbols.
@@ -60,7 +62,8 @@ MODULE ORS; (* NW 19.9.93 / 1.4.2014  Scanner in Oberon-07*)
   BEGIN p := Pos();
     IF (p > errpos) & (errcnt < 25) THEN
       Texts.WriteLn(W); Texts.WriteString(W, "  pos "); Texts.WriteInt(W, p, 1); Texts.Write(W, " ");
-      Texts.WriteString(W, msg); Texts.Append(Oberon.Log, W.buf)
+      Texts.WriteString(W, msg); Texts.Append(Oberon.Log, W.buf);
+      Oberon.DumpLog;
     END ;
     INC(errcnt); errpos := p + 4
   END Mark;
@@ -155,9 +158,16 @@ MODULE ORS; (* NW 19.9.93 / 1.4.2014  Scanner in Oberon-07*)
         UNTIL i = n;
         sym := int; ival := k
       ELSE (*real number*) x := 0.0; e := 0;
-        REPEAT  (*integer part*) x := x * 10.0 + FLT(d[i]); INC(i) UNTIL i = n;
+        REPEAT  (*integer part*) 
+	   (*x := x * 10.0 + FLT(d[i]); *)
+   x := x * 10.0 + (d[i]); (* voc adaptation by noch *)
+	   INC(i) 
+	UNTIL i = n;
         WHILE (ch >= "0") & (ch <= "9") DO  (*fraction*)
-          x := x * 10.0 + FLT(ORD(ch) - 30H); DEC(e); Texts.Read(R, ch)
+          (*x := x * 10.0 + FLT(ORD(ch) - 30H);*)
+          x := x * 10.0 + (ORD(ch) - 30H); (* voc adaptation by noch *)
+	  DEC(e);
+	  Texts.Read(R, ch)
         END ;
         IF (ch = "E") OR (ch = "D") THEN  (*scale factor*)
           Texts.Read(R, ch); s := 0; 
@@ -264,7 +274,11 @@ MODULE ORS; (* NW 19.9.93 / 1.4.2014  Scanner in Oberon-07*)
   END Init;
 
   PROCEDURE EnterKW(sym: INTEGER; name: ARRAY OF CHAR);
-  BEGIN keyTab[k].id := name; keyTab[k].sym := sym; INC(k)
+  BEGIN 
+     (*keyTab[k].id := name; *)
+     COPY(name, keyTab[k].id); (* voc adaptation by noch *)
+     keyTab[k].sym := sym; 
+     INC(k)
   END EnterKW;
 
 BEGIN Texts.OpenWriter(W); k := 0; KWX[0] := 0; KWX[1] := 0;

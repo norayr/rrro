@@ -1,11 +1,15 @@
 MODULE ORB;   (*NW 25.6.2014   in Oberon-07*)
-  IMPORT Files, ORS;
+  IMPORT Files := CompatFiles (* voc adaptation by noch *)
+  , ORS;
   (*Definition of data types Object and Type, which together form the data structure
     called "symbol table". Contains procedures for creation of Objects, and for search:
     NewObj, this, thisimport, thisfield (and OpenScope, CloseScope).
     Handling of import and export, i.e. reading and writing of "symbol files" is done by procedures
     Import and Export. This module contains the list of standard identifiers, with which
     the symbol table (universe), and that of the pseudo-module SYSTEM are initialized. *)
+
+  TYPE INTEGER = LONGINT; (* voc adaptation by noch *)
+       BYTE = CHAR;
 
   CONST versionkey* = 1; maxTypTab = 64;
     (* class values*) Head* = 0;
@@ -146,7 +150,8 @@ MODULE ORB;   (*NW 25.6.2014   in Oberon-07*)
   PROCEDURE Read(VAR R: Files.Rider; VAR x: INTEGER);
     VAR b: BYTE;
   BEGIN Files.ReadByte(R, b);
-    IF b < 80H THEN x := b ELSE x := b - 100H END
+    (*IF b < 80H THEN x := b ELSE x := b - 100H END*)
+    IF b < 80X THEN x := ORD(b) ELSE x := ORD(b) - 100H END (* voc adaptation by noch *)
   END Read;
   
   PROCEDURE InType(VAR R: Files.Rider; thismod: Object; VAR T: Type);
@@ -239,7 +244,9 @@ MODULE ORB;   (*NW 25.6.2014   in Oberon-07*)
   (*-------------------------------- Export ---------------------------------*)
 
   PROCEDURE Write(VAR R: Files.Rider; x: INTEGER);
-  BEGIN Files.WriteByte(R, x)
+  BEGIN 
+     (*Files.WriteByte(R, x)*)
+     Files.WriteByte(R, SHORT(SHORT(x))) (* voc adaptation by noch *)
   END Write;
 
   PROCEDURE OutType(VAR R: Files.Rider; t: Type);
@@ -365,7 +372,14 @@ MODULE ORB;   (*NW 25.6.2014   in Oberon-07*)
 
   PROCEDURE enter(name: ARRAY OF CHAR; cl: INTEGER; type: Type; n: LONGINT);
     VAR obj: Object;
-  BEGIN NEW(obj); obj.name := name; obj.class := cl; obj.type := type; obj.val := n; obj.dsc := NIL;
+  BEGIN 
+     NEW(obj); 
+     (*obj.name := name; *)
+     COPY(name, obj.name); (* voc adaptation by noch *)
+     obj.class := cl; 
+     obj.type := type; 
+     obj.val := n; 
+     obj.dsc := NIL;
     IF cl = Typ THEN type.typobj := obj END ;
     obj.next := system; system := obj
   END enter;

@@ -1,10 +1,12 @@
 MODULE ORP; (*N. Wirth 1.7.97 / 7.6.2014  Oberon compiler for RISC in Oberon-07*)
-  IMPORT Texts, Oberon, ORS, ORB, ORG;
+  IMPORT Texts := CompatTexts, Oberon, ORS, ORB, ORG;
   (*Author: Niklaus Wirth, 2014.
     Parser of Oberon-RISC compiler. Uses Scanner ORS to obtain symbols (tokens),
     ORB for definition of data structures and for handling import and export, and
     ORG to produce binary code. ORP performs type checking and data allocation.
     Parser is target-independent, except for part of the handling of allocations.*)
+
+  TYPE INTEGER = LONGINT; (* voc adaptation by noch *)
 
   TYPE PtrBase = POINTER TO PtrBaseDesc;
     PtrBaseDesc = RECORD  (*list of names of pointer base types*)
@@ -166,7 +168,10 @@ MODULE ORP; (*N. Wirth 1.7.97 / 7.6.2014  Oberon compiler for RISC in Oberon-07*
       IF (t0.base = t1.base) & (t0.nofpar = t1.nofpar) THEN
         p0 := t0.dsc; p1 := t1.dsc;
         WHILE p0 # NIL DO
-          IF (p0.class = p1.class) & CompTypes(p0.type, p1.type, TRUE) & (ORD(p0.rdo) = ORD(p1.rdo)) THEN
+          IF (p0.class = p1.class) & CompTypes(p0.type, p1.type, TRUE) & 
+	  (*(ORD(p0.rdo) = ORD(p1.rdo))*)
+	  (p0.rdo = p1.rdo) (* voc adaptation by noch *)
+	  THEN
             IF p0.type.form >= ORB.Array THEN com := CompTypes(p0.type, p1.type, (p0.class = ORB.Par)) END ;
             p0 := p0.next; p1 := p1.next
           ELSE p0 := NIL; com := FALSE
@@ -890,7 +895,8 @@ MODULE ORP; (*N. Wirth 1.7.97 / 7.6.2014  Oberon compiler for RISC in Oberon-07*
       ORB.Init; ORB.OpenScope;
       IF sym = ORS.ident THEN
         ORS.CopyId(modid); ORS.Get(sym);
-        Texts.WriteString(W, modid); Texts.Append(Oberon.Log, W.buf)
+        Texts.WriteString(W, modid); Texts.Append(Oberon.Log, W.buf);
+	Oberon.DumpLog; (* voc adaptation; -- noch *)
       ELSE ORS.Mark("identifier expected")
       END ;
       Check(ORS.semicolon, "no ;"); level := 0; dc := 0; exno := 1; key := 0;
@@ -934,6 +940,7 @@ MODULE ORP; (*N. Wirth 1.7.97 / 7.6.2014  Oberon compiler for RISC in Oberon-07*
       ELSE Texts.WriteLn(W); Texts.WriteString(W, "compilation FAILED")
       END ;
       Texts.WriteLn(W); Texts.Append(Oberon.Log, W.buf);
+      Oberon.DumpLog; (* voc adaptation; -- noch *)
       ORB.CloseScope; pbsList := NIL
     ELSE ORS.Mark("must start with MODULE")
     END
@@ -971,7 +978,8 @@ MODULE ORP; (*N. Wirth 1.7.97 / 7.6.2014  Oberon compiler for RISC in Oberon-07*
         NEW(T); Texts.Open(T, S.s);
         IF T.len > 0 THEN Option(S); ORS.Init(T, 0); Module
         ELSE Texts.WriteString(W, S.s); Texts.WriteString(W, " not found");
-          Texts.WriteLn(W); Texts.Append(Oberon.Log, W.buf)
+          Texts.WriteLn(W); Texts.Append(Oberon.Log, W.buf);
+	  Oberon.DumpLog; (* voc adaptation; -- noch *)
         END ;
         IF (T.len # 0) & (ORS.errcnt = 0) THEN Texts.Scan(S) ELSE S.class := 0 END
       END
@@ -981,6 +989,9 @@ MODULE ORP; (*N. Wirth 1.7.97 / 7.6.2014  Oberon compiler for RISC in Oberon-07*
 
 BEGIN Texts.OpenWriter(W); Texts.WriteString(W, "OR Compiler  7.6.2014");
   Texts.WriteLn(W); Texts.Append(Oberon.Log, W.buf);
+  Oberon.DumpLog; (* voc adaptation; -- noch *)
   NEW(dummy); dummy.class := ORB.Var; dummy.type := ORB.intType;
-  expression := expression0; Type := Type0; FormalType := FormalType0
+  expression := expression0; Type := Type0; FormalType := FormalType0;
+
+  Compile (* voc adaptation; -- noch *)
 END ORP.
